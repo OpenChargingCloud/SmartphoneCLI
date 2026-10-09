@@ -302,3 +302,9 @@ configuration.json
 # configuration so that a change of certificate is noticed across a restart.
 # A record of what this machine saw, like the log, and not of the source.
 known-servers.json
+
+# Every charging session of this smartphone, running and past: which station,
+# when, how much, and who started it. A record of what this phone did, like
+# the log, and not of the source.
+charging-sessions.json
+charging-sessions.json.*
