@@ -107,20 +107,37 @@ The map's tiles come from `tile.openstreetmap.org` - the one thing the web
 interface loads from elsewhere, allowed by its Content-Security-Policy for
 images and for nothing else - and **Locate me** asks the browser, which says
 where it is only to a page served over HTTPS or from the machine itself
-(`127.0.0.1`, `localhost`).
+(`127.0.0.1`, `localhost`). From anywhere else it takes HTTPS, below.
+
+
+### HTTPS
+
+```
+dotnet run --project SmartphoneCLI -- --any --https-cert C:\certs\fullchain.pem --https-key C:\certs\privkey.pem
+```
+
+`--https` shows the store's `tlsServerIdentity` instead of a pair of PEM files,
+`--redirect-port` answers plain HTTP on a second port with a redirect to
+HTTPS, and `--trusted-proxy` names a reverse proxy in front that is believed
+about who connects. The same can be kept in the `"web"` section of
+`configuration.json` - `"tls"`, `"redirectPort"`, `"hsts"`, `"trustedProxies"`
+- and the switches win over the file. Plain HTTP on any address but the
+machine's own is said loudly: in the log, at the start, on the Configuration
+page.
 
 
 ### Certificates
 
 The store is `certificates/` beside the configuration file: one file per
 certificate and an `index.json` with what a file cannot say about itself. A
-smartphone keeps three kinds:
+smartphone keeps four kinds:
 
 | | |
 |---|---|
 | `tlsRoot` | a root CA it believes, beside the roots of the machine it runs on - and what for: `nts`, `dns`, or both. Later its e-mobility provider's. |
 | `tlsServer` | a server's own certificate, kept to hold that server to by its fingerprint |
 | `tlsIdentity` | who the smartphone is to a server that asks, with its private key - for when it signs in to its e-mobility provider with a certificate |
+| `tlsServerIdentity` | who its web interface is over HTTPS, with its private key - what `--https` shows |
 
 No root of clients, because nobody connects to a smartphone with a
 certificate, and nothing of ISO 15118, which is the vehicle's. Roots go in on
