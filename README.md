@@ -8,12 +8,15 @@ The smartphone of an EV driver, with a web interface and a prompt, until
 
 It stands in for the apps on Android and iOS: the thing in the driver's pocket
 with a map of charging stations, a "Charge now!" on each of them, and the
-sessions it started, watched while they happen. The charging is simulated for
-now: the account at an e-mobility provider that would start real sessions,
-and the charging tickets issued there, come next. Underneath is what an app
-has to get right before any of it: the time, the name servers, and - above
-all - which root CAs it believes, because an app talks to its provider over
-TLS and to nobody else.
+sessions it started, watched while they happen. Given the trust anchor of a
+roaming network, the map is that network's, and every station is checked
+against the anchor before anything it says is believed: its tariffs, its
+prices, and the keys its energy meters sign their measurements with. The
+charging is simulated for now: the account at an e-mobility provider that
+would start real sessions, and the charging tickets issued there, come next.
+Underneath is what an app has to get right before any of it: the time, the
+name servers, and - above all - what it trusts: which root CAs, because an
+app talks to its provider over TLS, and which roaming network operator.
 
 It is a sibling of [EVCLI](https://github.com/OpenChargingCloud/EVCLI),
 [EMSPCLI](https://github.com/OpenChargingCloud/EMSPCLI),
@@ -24,7 +27,9 @@ built by npm and embedded into the assembly. What every program of the family
 has - the sign-in, the name servers (DNS), the time servers (NTS), the
 certificates they are held to, the SSH server and the log - is
 [WWCP_Node](https://github.com/OpenChargingCloud/WWCP_Node); what is the
-smartphone's own is in [Smartphone](https://github.com/OpenChargingCloud/Smartphone).
+smartphone's own is in [Smartphone](https://github.com/OpenChargingCloud/Smartphone);
+roaming networks, their proofs and how they are checked are
+[WWCP_POI](https://github.com/OpenChargingCloud/WWCP_POI).
 
 
 ### Getting it
@@ -76,9 +81,9 @@ All of them are in `.gitignore`.
 
 | | |
 |---|---|
-| **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen |
+| **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, and its energy meter with the public key it signs with |
 | **Charging** | what this phone charges right now - several sessions at once, each with what it charged, how fast, for how long, what it costs so far, and **Stop charging**; **History** below it lists every session, running and past, and a row opens one with everything about it |
-| **Configuration** | what the smartphone is running, and below it **Map** - the URL the map is to take its stations from - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes and its **Identities** |
+| **Configuration** | what the smartphone is running, and below it **Map** - the trust anchor of the roaming network the map is of, and a URL kept for later - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes, its **Identities** and its **Server identities** |
 | **Logs** | the log as it happens |
 
 "root" may do everything; the role **driver** looks at the map and the
@@ -88,12 +93,13 @@ everything and starts nothing.
 
 ### The map and charging, for now
 
-The URL under Configuration → Map is kept in `configuration.json` and shown,
-and not asked yet - empty by default. Until it is, the map shows eleven demo
-stations in and around Jena, with made-up operators: most of their charge
-points come and go between available and charging every ten minutes, a few
-stay out of order, reserved or planned. The stations are kept in the shape
-of OCPI locations, so that a URL speaking OCPI drops in where they are.
+Without a roaming network, the map shows eleven demo stations in and around
+Jena, with made-up operators: most of their charge points come and go between
+available and charging every ten minutes, a few stay out of order, reserved or
+planned. The stations are kept in the shape of OCPI locations, so that the
+pools of a roaming network drop in where they are. The URL under
+Configuration → Map beside the trust anchor is kept in `configuration.json`
+and shown, and not asked.
 
 **Charge now!** starts a simulated session: a vehicle that takes what the
 charge point gives, up to 11 kW on AC and 150 kW on DC, until 30 kWh are in.
@@ -108,6 +114,46 @@ interface loads from elsewhere, allowed by its Content-Security-Policy for
 images and for nothing else - and **Locate me** asks the browser, which says
 where it is only to a page served over HTTPS or from the machine itself
 (`127.0.0.1`, `localhost`). From anywhere else it takes HTTPS, below.
+
+
+### A roaming network
+
+What an app trusts of a roaming network is its **trust anchor**: what its
+operator prints as a QR code, on its website or in its documents - where the
+network is served, one URL or more, and the thumbprints of the identity keys
+of its operator, with how many of their holders have to agree. It goes in
+under Configuration → Map as the text of the QR code (`WWCP/TA-2:` and what
+follows), its URI or its JSON, and is kept in `configuration.json` as its
+JSON:
+
+```json
+"roamingNetwork": { "trustAnchor": { "@id": "QA", "urls": [ "https://hub.example/poi/RNs/QA" ], "keys": [ "a1…" ] } }
+```
+
+The map then shows the charging pools the network lists (`…/RNs/{id}/CPs`),
+asked at its URLs in their order, the next where one does not answer, and
+again after a minute or on **Reload**. That list is not signed: it only says
+where to look. A pin, as it opens, has the smartphone fetch the **proof** of
+each of its stations (`…/CSs/{id}/proof`) and check it, offline, against the
+trust anchor: everything the network says of the station - its EVSEs, their
+energy meters with the public keys they sign their measurements with, the
+tariffs they take - in a hash tree whose root the operator of the network
+attested, with a key its identity key certified, for a quarter of an hour.
+The price statements of the station (`…/CSs/{id}/priceStatements`), new prices
+its operator signed, are checked against the keys the proof gives.
+
+What a proof that holds gives is shown, and nothing of one that does not:
+nothing is charged at a station nobody the anchor names attested, nor at one
+whose check has run out. **Charge now!** there takes the price its proof says
+- the price statement of the EVSE before that of its station before that of
+its pool before the tariff - and the energy meter's key is known before the
+first meter value is. A roaming network says the status of its charge points
+only over its WebSocket, so their pins are grey, of a status not known.
+
+The trust anchor is the only thing trusted. The servers only pass on what is
+signed, and a key a proof names of itself proves nothing. A QR code is as
+trustworthy as the place it was found: one stuck on a charging station may be
+anybody's.
 
 
 ### HTTPS
@@ -165,8 +211,9 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 ### What comes next
 
 An account at an e-mobility provider (EMSPCLI), charging tickets issued there,
-real sessions started through it instead of simulated ones - and the stations
-of the map asked of the URL that is configured for them.
+real sessions started through it instead of simulated ones, with their meter
+values checked against the key the station's proof gave - and the status of
+the charge points of a roaming network, followed over its WebSocket.
 
 
 ## Your participation
