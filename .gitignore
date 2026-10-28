@@ -308,3 +308,9 @@ known-servers.json
 # the log, and not of the source.
 charging-sessions.json
 charging-sessions.json.*
+
+# The account of this smartphone at its e-mobility provider - its password
+# and its private account key - and the charging tickets it was issued, each
+# with the private key that proves it. Anchored like the accounts, and with
+# more to lose than any of them.
+/provider/
