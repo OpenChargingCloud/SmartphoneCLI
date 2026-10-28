@@ -13,9 +13,10 @@ roaming network, the map is that network's, and every station is checked
 against the anchor before anything it says is believed: its tariffs, its
 prices, and the keys its energy meters sign their measurements with. With an
 account at an e-mobility provider, every start has a charging ticket of its
-own, which tells a charge point operator who pays and not who charges. The
-charging itself is simulated for now: the provider takes no start requests
-yet.
+own, which tells a charge point operator who pays and not who charges, and
+goes through the provider as a start request signed by the ticket's key and
+countersigned by the provider. What a session charges is simulated for now:
+no meter values reach the phone yet.
 Underneath is what an app has to get right before any of it: the time, the
 name servers, and - above all - what it trusts: which root CAs, because an
 app talks to its provider over TLS, and which roaming network operator.
@@ -108,11 +109,12 @@ and shown, and not asked.
 
 **Charge now!** starts a simulated session: a vehicle that takes what the
 charge point gives, up to 11 kW on AC and 150 kW on DC, until 30 kWh are in.
-Nothing is asked of an e-mobility provider and nothing is charged for real -
-every page that shows a session says so. The figures are worked out from when
-it started and stopped rather than counted by a timer, so a session charges
-on while nobody looks, and a restart of the phone keeps every session, the
-running ones running.
+Without an account at an e-mobility provider, nothing is asked of one and
+nothing is charged for real; with one, the start and the stop go through it
+(below), and only the figures are simulated - every page that shows a session
+says which. The figures are worked out from when it started and stopped
+rather than counted by a timer, so a session charges on while nobody looks,
+and a restart of the phone keeps every session, the running ones running.
 
 The map's tiles come from `tile.openstreetmap.org` - the one thing the web
 interface loads from elsewhere, allowed by its Content-Security-Policy for
@@ -210,16 +212,37 @@ own**, right before the start:
    written, both signatures, and nothing of the account left in it. A ticket
    that fails is refused, and nothing is started.
 
-The session names its ticket - its id, its validity, the thumbprint of its key
-and the fingerprint of the issuer - and the ticket and its key are kept in
-`provider/tickets/`, as a stop and the meter values of the session will be
-proven with that key. A charge point operator that sees the ticket learns
-which provider pays, and not who charges, and no two sessions share a key.
+Then **the start goes through the provider**, as the draft
+[docs/RemoteStartWithChargingTickets.md](https://github.com/OpenChargingCloud/Smartphone/blob/master/docs/RemoteStartWithChargingTickets.md)
+has it:
 
-What is still simulated is the start itself: the provider takes no start
-requests yet. How it will - a start request signed by the ticket's key and
-countersigned by the provider, sent with OCPI `START_SESSION` - is a draft in
-[docs/RemoteStartWithChargingTickets.md](https://github.com/OpenChargingCloud/Smartphone/blob/master/docs/RemoteStartWithChargingTickets.md).
+1. a start request - the ticket's digest, the EVSE, now, a nonce, and at a
+   station of a roaming network the version of its proof the phone checked
+   and the tariff of its price - signed by the ticket's key, and sent with the
+   ticket (`POST /api/v1/tickets/{id}/start`);
+2. back countersigned by the provider's ticket issuer, with the OCPI token of
+   this start alone, the authorization reference and when it signed in its
+   protected header - checked by the phone: its own bytes and signature as
+   they went, the issuer's signature, the token covered by it, and the time
+   near the phone's clock. A start that fails is refused, and nothing is
+   started;
+3. **Stop** the same way: a stop request naming the ticket and the start,
+   countersigned with the start's token (`POST /api/v1/tickets/{id}/stop`). A
+   stop that fails leaves the session charging.
+
+The session names its ticket - its id, its validity, the thumbprint of its key
+and the fingerprint of the issuer - and its start and stop: the token, the
+reference, and the digests of both requests as the provider countersigned
+them. The ticket, its key and both requests are kept in `provider/tickets/`,
+as the meter values of the session will be proven with that key. A charge
+point operator that sees the ticket learns which provider pays, and not who
+charges, and no two sessions share a key or a token. The account is not
+forgotten while a session started through it charges.
+
+The provider's side of the start is a draft as well: the stand-in EMSP of the
+tests countersigns as the draft says, and the
+[EMSP](https://github.com/OpenChargingCloud/EMSP) takes no start requests yet.
+With an account there, "Charge now!" says so and starts nothing.
 
 
 ### Certificates
@@ -260,11 +283,11 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 
 ### What comes next
 
-Real sessions started through the e-mobility provider instead of simulated
-ones - a start request signed by the ticket's key and countersigned by the
-provider - with their meter values checked against the key the station's
-proof gave; and the status of the charge points of a roaming network,
-followed over its WebSocket.
+The EMSP taking start and stop requests, and what became of a start - the
+session the charge point operator reports, and its meter values checked
+against the key the station's proof gave - instead of simulated figures; and
+the status of the charge points of a roaming network, followed over its
+WebSocket.
 
 
 ## Your participation
