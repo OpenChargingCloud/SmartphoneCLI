@@ -259,8 +259,10 @@ the charge point operator as OCPI `START_SESSION` and the stop as
 peered with it has pushed among its locations. Without one, "Charge now!" with
 an account there gets as far as the EVSE: the EMSP takes the ticket and the
 start request, answers that it knows no such EVSE, and nothing is started.
-What became of a start the stand-in tells as the draft says, as its test has
-the operator report it; the EMSP tells nothing of it yet.
+What became of a start both tell as the draft says: the stand-in as its test
+has the operator report it, and the EMSP as the operator reported it - which,
+without an operator, is a ticket with no start, and a session that stays
+simulated.
 
 
 ### Certificates
@@ -301,10 +303,15 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 
 ### What comes next
 
-The EMSP telling what became of a start, as the draft's "After the start"
-says; the signed meter values of a charge detail record checked against the
-key the station's proof gave; and the status of the charge points of a
-roaming network, followed over its WebSocket.
+A start through a charge point operator, end to end: the phone, the EMSP and
+an operator that starts and stops at a station on `START_SESSION` and
+`STOP_SESSION` and sends its session and its charge detail record, peered
+through the [RoamingHub](https://github.com/OpenChargingCloud/RoamingHubCLI) -
+once the hub passes on what one peer sends to another, and the
+[CSMS](https://github.com/OpenChargingCloud/CSMSCLI) starts and stops on these
+commands; neither does yet. Then the signed meter values of a charge detail
+record checked against the key the station's proof gave; and the status of the
+charge points of a roaming network, followed over its WebSocket.
 
 
 ## Your participation
