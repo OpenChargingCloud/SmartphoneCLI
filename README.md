@@ -15,8 +15,9 @@ prices, and the keys its energy meters sign their measurements with. With an
 account at an e-mobility provider, every start has a charging ticket of its
 own, which tells a charge point operator who pays and not who charges, and
 goes through the provider as a start request signed by the ticket's key and
-countersigned by the provider. What a session charges is simulated for now:
-no meter values reach the phone yet.
+countersigned by the provider. From then on a session is what the provider
+reports of it - the charge point operator's session and its charge detail
+record - and simulated only where the provider reports nothing.
 Underneath is what an app has to get right before any of it: the time, the
 name servers, and - above all - what it trusts: which root CAs, because an
 app talks to its provider over TLS, and which roaming network operator.
@@ -110,11 +111,12 @@ and shown, and not asked.
 **Charge now!** starts a simulated session: a vehicle that takes what the
 charge point gives, up to 11 kW on AC and 150 kW on DC, until 30 kWh are in.
 Without an account at an e-mobility provider, nothing is asked of one and
-nothing is charged for real; with one, the start and the stop go through it
-(below), and only the figures are simulated - every page that shows a session
-says which. The figures are worked out from when it started and stopped
-rather than counted by a timer, so a session charges on while nobody looks,
-and a restart of the phone keeps every session, the running ones running.
+nothing is charged for real; with one, the start and the stop go through it,
+and the session is what the provider reports of it (below) - simulated only
+where it reports nothing. Every page that shows a session says which. The
+simulated figures are worked out from when it started and stopped rather than
+counted by a timer, so a session charges on while nobody looks, and a restart
+of the phone keeps every session, the running ones running.
 
 The map's tiles come from `tile.openstreetmap.org` - the one thing the web
 interface loads from elsewhere, allowed by its Content-Security-Policy for
@@ -228,7 +230,17 @@ has it:
    started;
 3. **Stop** the same way: a stop request naming the ticket and the start,
    countersigned with the start's token (`POST /api/v1/tickets/{id}/stop`). A
-   stop that fails leaves the session charging.
+   stop that fails leaves the session charging;
+4. **what became of it**, asked of the provider while a page shows the
+   session, at most every 15 seconds (`GET /api/v1/tickets/{id}`): the
+   provider's state of the start, the operator's answer to the command, and
+   the session and the charge detail record the operator pushed for it -
+   taken only where they name the start's token and reference. From the first
+   answer on, the session is what they say: starting until the operator
+   reports charging, then its kWh and its cost, finished with the figures of
+   its charge detail record, or failed with the operator's answer. The
+   record's signed meter values are kept as they came. A provider that tells
+   nothing leaves the figures simulated.
 
 The session names its ticket - its id, its validity, the thumbprint of its key
 and the fingerprint of the issuer - and its start and stop: the token, the
@@ -247,6 +259,8 @@ the charge point operator as OCPI `START_SESSION` and the stop as
 peered with it has pushed among its locations. Without one, "Charge now!" with
 an account there gets as far as the EVSE: the EMSP takes the ticket and the
 start request, answers that it knows no such EVSE, and nothing is started.
+What became of a start the stand-in tells as the draft says, as its test has
+the operator report it; the EMSP tells nothing of it yet.
 
 
 ### Certificates
@@ -287,11 +301,10 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 
 ### What comes next
 
-The EMSP taking start and stop requests, and what became of a start - the
-session the charge point operator reports, and its meter values checked
-against the key the station's proof gave - instead of simulated figures; and
-the status of the charge points of a roaming network, followed over its
-WebSocket.
+The EMSP telling what became of a start, as the draft's "After the start"
+says; the signed meter values of a charge detail record checked against the
+key the station's proof gave; and the status of the charge points of a
+roaming network, followed over its WebSocket.
 
 
 ## Your participation
