@@ -239,10 +239,14 @@ point operator that sees the ticket learns which provider pays, and not who
 charges, and no two sessions share a key or a token. The account is not
 forgotten while a session started through it charges.
 
-The provider's side of the start is a draft as well: the stand-in EMSP of the
-tests countersigns as the draft says, and the
-[EMSP](https://github.com/OpenChargingCloud/EMSP) takes no start requests yet.
-With an account there, "Charge now!" says so and starts nothing.
+The provider's side of the start is a draft as well. The stand-in EMSP of the
+tests countersigns as the draft says, and so does the
+[EMSP](https://github.com/OpenChargingCloud/EMSP), which sends the start on to
+the charge point operator as OCPI `START_SESSION` and the stop as
+`STOP_SESSION` - on OCPI 2.2.1 or later, and only for an EVSE that an operator
+peered with it has pushed among its locations. Without one, "Charge now!" with
+an account there gets as far as the EVSE: the EMSP takes the ticket and the
+start request, answers that it knows no such EVSE, and nothing is started.
 
 
 ### Certificates
