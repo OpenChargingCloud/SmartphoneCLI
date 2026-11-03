@@ -88,7 +88,7 @@ with an account at an e-mobility provider, `provider/`. All of them are in
 |---|---|
 | **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, and its energy meter with the public key it signs with |
 | **Charging** | what this phone charges right now - several sessions at once, each with what it charged, how fast, for how long, what it costs so far, and **Stop charging**; **History** below it lists every session, running and past, and a row opens one with everything about it |
-| **Configuration** | what the smartphone is running, and below it **Map** - the trust anchor of the roaming network the map is of, and a URL kept for later - the **E-mobility provider** - the account this phone charges with, its account key and the provider's ticket issuer - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes, its **Identities** and its **Server identities** |
+| **Configuration** | what the smartphone is running, and below it **Map** - the trust anchor of the roaming network the map is of, which of its identity keys are trusted, and a URL kept for later - the **E-mobility provider** - the account this phone charges with, its account key and the provider's ticket issuer - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes, its **Identities** and its **Server identities** |
 | **Logs** | the log as it happens |
 
 "root" may do everything; the role **driver** looks at the map, the
@@ -127,42 +127,58 @@ where it is only to a page served over HTTPS or from the machine itself
 
 ### A roaming network
 
-What an app trusts of a roaming network is its **trust anchor**: what its
+What an app pins of a roaming network is its **trust anchor**: what its
 operator prints as a QR code, on its website or in its documents - where the
 network is served, one URL or more, and the thumbprints of the identity keys
 of its operator, with how many of their holders have to agree. It goes in
 under Configuration → Map as the text of the QR code (`WWCP/TA-2:` and what
-follows), its URI or its JSON, and is kept in `configuration.json` as its
-JSON:
+follows), its URI or its JSON.
+
+Setting it trusts none of its keys yet, as in every app of the family: a QR
+code is as trustworthy as the place it was found, and one stuck on a charging
+station may be anybody's. Configuration → Map asks the network for the key
+statement of its operator (`…/RNs/{id}/keyStatement`) and shows each key of
+the anchor, per holder, with what the statement says of it, and whether the
+statement is signed validly and valid now. An administrator trusts each key on
+its own, confirmed first, and can trust it no longer. Setting the same anchor
+again, in any of its forms, keeps the keys trusted; another one trusts none.
+Both are kept in `configuration.json`, the anchor as its JSON:
 
 ```json
-"roamingNetwork": { "trustAnchor": { "@id": "QA", "urls": [ "https://hub.example/poi/RNs/QA" ], "keys": [ "a1…" ] } }
+"roamingNetwork": {
+    "trustAnchor": { "@id": "QA", "urls": [ "https://hub.example/poi/RNs/QA" ], "keys": [ "a1…" ] },
+    "trustedKeys": [ { "id": "a1…", "acceptedAt": "2026-11-03T09:00:00.0000000+00:00", "acceptedBy": "admin" } ]
+}
 ```
 
 The map then shows the charging pools the network lists (`…/RNs/{id}/CPs`),
 asked at its URLs in their order, the next where one does not answer, and
 again after a minute or on **Reload**. That list is not signed: it only says
 where to look. A pin, as it opens, has the smartphone fetch the **proof** of
-each of its stations (`…/CSs/{id}/proof`) and check it, offline, against the
-trust anchor: everything the network says of the station - its EVSEs, their
-energy meters with the public keys they sign their measurements with, the
-tariffs they take - in a hash tree whose root the operator of the network
-attested, with a key its identity key certified, for a quarter of an hour.
-The price statements of the station (`…/CSs/{id}/priceStatements`), new prices
-its operator signed, are checked against the keys the proof gives.
+each of its stations (`…/CSs/{id}/proof`). The phone checks it offline, against
+the keys trusted here. That is a trust context of them, evaluated of the key
+statement the proof gives at the time of the check, as WWCP_POI evaluates one.
+The proof holds everything the network says of the station: its EVSEs, their
+energy meters with the public keys they sign their measurements with, and the
+tariffs they take. They sit in a hash tree whose root the operator of the
+network attested for a quarter of an hour, with a key its identity key
+certified. The page says which holders attest it and until when, at most, it
+holds. The price statements of the station (`…/CSs/{id}/priceStatements`), new
+prices its operator signed, are checked against the keys the proof gives, each
+on its own and then all together. Of each entity the one in force is taken.
+Where two of one sequence contradict each other, a split view, none is taken,
+and the price is not known.
 
 What a proof that holds gives is shown, and nothing of one that does not:
-nothing is charged at a station nobody the anchor names attested, nor at one
-whose check has run out. **Charge now!** there takes the price its proof says
+nothing is charged at a station nobody trusted here attested, nor at one whose
+check has run out. **Charge now!** there takes the price its proof says
 - the price statement of the EVSE before that of its station before that of
 its pool before the tariff - and the energy meter's key is known before the
 first meter value is. A roaming network says the status of its charge points
 only over its WebSocket, so their pins are grey, of a status not known.
 
-The trust anchor is the only thing trusted. The servers only pass on what is
-signed, and a key a proof names of itself proves nothing. A QR code is as
-trustworthy as the place it was found: one stuck on a charging station may be
-anybody's.
+Only the keys trusted here are trusted. The servers only pass on what is
+signed, and a key a proof names of itself proves nothing.
 
 
 ### HTTPS
