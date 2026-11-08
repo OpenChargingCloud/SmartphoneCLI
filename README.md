@@ -71,6 +71,11 @@ It listens on http://127.0.0.1:2346/ - one below the vehicle's 2347 - and
 serves its prompt over SSH on 22346. `--any` for every address, `--port` for
 another one, `--help` for every switch.
 
+SFTP is there, as on every node of the family, but off: the phone has no
+files to move for anyone yet. **Configuration > SSH server** switches it on
+and off while the phone runs, without its SSH server starting anew, and keeps
+it in `configuration.json` (`"ssh": { "sftp": true }`).
+
 At the first start it makes one account, `root`, and shows its password once,
 on the console. `root` is the driver - the person whose phone this is. Give it
 your own SSH key with that very start, and you can type at the phone over SSH
@@ -90,7 +95,7 @@ with an account at an e-mobility provider, `provider/`. All of them are in
 
 | | |
 |---|---|
-| **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned - of a roaming network as it says it over its WebSocket. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, and its energy meter with the public key it signs with |
+| **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned - of a roaming network as it says it over its WebSocket. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, its energy meter with the public key it signs with, and the web payment page of its operator; **Pay ad hoc at its operator** leads there |
 | **Charging** | what this phone charges right now - several sessions at once, each with what it charged, how fast, for how long, what it costs so far, and **Stop charging**; **History** below it lists every session, running and past, and a row opens one with everything about it - at a station of a roaming network, whether its meter signed the values of its charge detail record, and the price stated for its start |
 | **Configuration** | what the smartphone is running, and below it **Map** - the trust anchor of the roaming network the map is of, which of its identity keys are trusted, and a URL kept for later - the **E-mobility provider** - the account this phone charges with, its account key and the provider's ticket issuer - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes, its **Identities** and its **Server identities** |
 | **Logs** | the log as it happens |
@@ -189,6 +194,17 @@ Nothing of it is signed - like the list of pools, it is only where to look -
 and nothing of it is kept once the network is not reached, at none of the URLs
 of its trust anchor: the pins are grey then, of a status not known, and a
 charge point is started at as one a driver stands in front of.
+
+Where a driver pays ad hoc, without an e-mobility provider, the proof says
+too: the web payment page of the station's operator (`webPaymentURL` of
+WWCP_POI) - the station's own, else that of its pool, else the operator's,
+signed by a key of the operator that may sign `payments`, as whoever changes
+it redirects payments. The popup of a station whose proof holds offers it as
+**Pay ad hoc at its operator**, for the station of the charge point chosen;
+there the driver pays and starts, and the page leads on to the session. Only
+an https URL is linked, another one only said. It is not the URL in the
+dynamic QR code of a station, which is of one EVSE and changes every few
+minutes.
 
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
@@ -352,13 +368,13 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 
 ### What comes next
 
-Charging ad hoc, without an e-mobility provider: a free charge point found on
-the map, its proof and tariff checked, and then the web payment page of its
-operator - reached by the dynamic QR code of the station, or found in its POI
-data - where the driver pays and starts. The answer is a live link of the
-session, over which the phone checks the signed start value, stopping the
-session where it does not hold, every value after it, and the end value, which
-it disputes where it does not hold.
+Charging ad hoc, without an e-mobility provider: a free charge point is found
+on the map, its proof and tariff checked, and its operator's web payment page
+offered - reached as well by the dynamic QR code of the station. What comes
+next is the session the page starts: the live link it leads to, over which the
+phone checks the signed start value, stopping the session where it does not
+hold, every value after it, and the end value, which it disputes where it does
+not hold - stopping and disputing by the links of that page.
 
 Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
