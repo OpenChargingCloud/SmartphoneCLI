@@ -206,6 +206,21 @@ an https URL is linked, another one only said. It is not the URL in the
 dynamic QR code of a station, which is of one EVSE and changes every few
 minutes.
 
+Paid there, the page started the session and gives its live link - a
+[Charge Transparency LiveLink](https://github.com/OpenChargingCloud/ChargyCore.NET/tree/master/documentation/ChargeTransparencyLiveLink)
+document, or the https URL of one. The driver hands it over in the popup of
+the station, for the charge point paid for (`POST v1/charging/sessions` with
+`"liveLink"`), and only where the station's proof holds and the link names no
+other charge point. From then on the phone follows it with
+[ChargyCore.NET](https://github.com/OpenChargingCloud/ChargyCore.NET) - over
+https, Server-Sent Events or a WebSocket, as the link says - and keeps every
+signed document that comes, as it came: the session is starting until the
+first comes, charging from then on, and finished once the meter signs the end
+of the transaction or the station ends the stream. Its energy and cost are
+what the documents say, for the price the proof gives, and not checked yet
+against the key the proof gives for the meter. It is stopped at the page, not
+here; a restart of the phone follows it on.
+
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
 holds for minutes, and the network serves the proof of its head and of no
@@ -369,12 +384,13 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 ### What comes next
 
 Charging ad hoc, without an e-mobility provider: a free charge point is found
-on the map, its proof and tariff checked, and its operator's web payment page
-offered - reached as well by the dynamic QR code of the station. What comes
-next is the session the page starts: the live link it leads to, over which the
-phone checks the signed start value, stopping the session where it does not
-hold, every value after it, and the end value, which it disputes where it does
-not hold - stopping and disputing by the links of that page.
+on the map, its proof and tariff checked, its operator's web payment page
+offered - reached as well by the dynamic QR code of the station - and the live
+link of the session the page starts followed. What comes next is checking what
+comes over it with the key the proof gives for the meter: the signed start
+value, stopping the session where it does not hold, every value after it, and
+the end value, which it disputes where it does not hold - stopping and
+disputing by the links of that page.
 
 Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
