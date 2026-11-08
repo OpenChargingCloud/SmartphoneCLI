@@ -90,7 +90,7 @@ with an account at an e-mobility provider, `provider/`. All of them are in
 
 | | |
 |---|---|
-| **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, and its energy meter with the public key it signs with |
+| **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned - of a roaming network as it says it over its WebSocket. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, and its energy meter with the public key it signs with |
 | **Charging** | what this phone charges right now - several sessions at once, each with what it charged, how fast, for how long, what it costs so far, and **Stop charging**; **History** below it lists every session, running and past, and a row opens one with everything about it - at a station of a roaming network, whether its meter signed the values of its charge detail record, and the price stated for its start |
 | **Configuration** | what the smartphone is running, and below it **Map** - the trust anchor of the roaming network the map is of, which of its identity keys are trusted, and a URL kept for later - the **E-mobility provider** - the account this phone charges with, its account key and the provider's ticket issuer - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes, its **Identities** and its **Server identities** |
 | **Logs** | the log as it happens |
@@ -178,8 +178,17 @@ nothing is charged at a station nobody trusted here attested, nor at one whose
 check has run out. **Charge now!** there takes the price its proof says
 - the price statement of the EVSE before that of its station before that of
 its pool before the tariff - and the energy meter's key is known before the
-first meter value is. A roaming network says the status of its charge points
-only over its WebSocket, so their pins are grey, of a status not known.
+first meter value is.
+
+Which charge points are free the network says over the WebSocket of its
+history (`…/history/ws`): the phone subscribes to the admin status and the
+status of its EVSEs, asks for all of it once, and the pins take the colour of
+what they are, the map asking again every ten seconds. Where the network says
+a charge point is taken, reserved or out of service, nothing is started there.
+Nothing of it is signed - like the list of pools, it is only where to look -
+and nothing of it is kept once the network is not reached, at none of the URLs
+of its trust anchor: the pins are grey then, of a status not known, and a
+charge point is started at as one a driver stands in front of.
 
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
@@ -343,14 +352,21 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 
 ### What comes next
 
-A start through a charge point operator, end to end: the phone, the EMSP and
+Charging ad hoc, without an e-mobility provider: a free charge point found on
+the map, its proof and tariff checked, and then the web payment page of its
+operator - reached by the dynamic QR code of the station, or found in its POI
+data - where the driver pays and starts. The answer is a live link of the
+session, over which the phone checks the signed start value, stopping the
+session where it does not hold, every value after it, and the end value, which
+it disputes where it does not hold.
+
+Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
 `STOP_SESSION` and sends its session and its charge detail record, peered
 through the [RoamingHub](https://github.com/OpenChargingCloud/RoamingHubCLI) -
 once the hub passes on what one peer sends to another, and the
 [CSMS](https://github.com/OpenChargingCloud/CSMSCLI) starts and stops on these
-commands; neither does yet. Then the status of the charge points of a roaming
-network, followed over its WebSocket.
+commands; neither does yet.
 
 
 ## Your participation
