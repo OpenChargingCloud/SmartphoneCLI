@@ -17,7 +17,9 @@ own, which tells a charge point operator who pays and not who charges, and
 goes through the provider as a start request signed by the ticket's key and
 countersigned by the provider. From then on a session is what the provider
 reports of it - the charge point operator's session and its charge detail
-record - and simulated only where the provider reports nothing.
+record, whose signed meter values are checked with the key the station's
+proof gave for its energy meter - and simulated only where the provider
+reports nothing.
 Underneath is what an app has to get right before any of it: the time, the
 name servers, and - above all - what it trusts: which root CAs, because an
 app talks to its provider over TLS, and which roaming network operator.
@@ -33,7 +35,9 @@ certificates they are held to, the SSH server and the log - is
 [WWCP_Node](https://github.com/OpenChargingCloud/WWCP_Node); what is the
 smartphone's own is in [Smartphone](https://github.com/OpenChargingCloud/Smartphone);
 roaming networks, their proofs and how they are checked are
-[WWCP_POI](https://github.com/OpenChargingCloud/WWCP_POI).
+[WWCP_POI](https://github.com/OpenChargingCloud/WWCP_POI); signed meter
+values are read and verified by
+[ChargyCore.NET](https://github.com/OpenChargingCloud/ChargyCore.NET).
 
 
 ### Getting it
@@ -87,7 +91,7 @@ with an account at an e-mobility provider, `provider/`. All of them are in
 | | |
 |---|---|
 | **Map** | the charging stations on an OpenStreetMap map, each pin in the colour of what its charge points are now - available, charging, reserved, out of order, planned. A search above it finds a station by its name, street, city, operator or EVSE ID; **Locate me** shows where this device is. A pin opens the station: its address, operator and price, its charge points with their status, connector and power, and **Charge now!** at the one chosen. Of a roaming network, the pin checks the station first, says whether it is signed, and leads to **What is signed about it**: who attested it and until when, each charge point's tariff and price, and its energy meter with the public key it signs with |
-| **Charging** | what this phone charges right now - several sessions at once, each with what it charged, how fast, for how long, what it costs so far, and **Stop charging**; **History** below it lists every session, running and past, and a row opens one with everything about it |
+| **Charging** | what this phone charges right now - several sessions at once, each with what it charged, how fast, for how long, what it costs so far, and **Stop charging**; **History** below it lists every session, running and past, and a row opens one with everything about it - at a station of a roaming network, whether its meter signed the values of its charge detail record, and the price stated for its start |
 | **Configuration** | what the smartphone is running, and below it **Map** - the trust anchor of the roaming network the map is of, which of its identity keys are trusted, and a URL kept for later - the **E-mobility provider** - the account this phone charges with, its account key and the provider's ticket issuer - the **DNS client**, the **NTS client**, the **SSH server**, the **Certificates** it believes, its **Identities** and its **Server identities** |
 | **Logs** | the log as it happens |
 
@@ -177,8 +181,27 @@ its pool before the tariff - and the energy meter's key is known before the
 first meter value is. A roaming network says the status of its charge points
 only over its WebSocket, so their pins are grey, of a status not known.
 
+A session started there keeps, in `charging-sessions.json`, the proof its
+station was checked by and the price statements that held. An attestation
+holds for minutes, and the network serves the proof of its head and of no
+time before, so while the session charges the phone asks for the proof again
+every five minutes, and once more at its stop, keeping three at most: the one
+of the start, the first after it, the latest. When the charge detail record
+comes, each of its signed meter values - an OCMF document - is checked with
+the key the proofs give for the energy meter of the EVSE at the time the
+meter signed it, as WWCP_POI's `HistoricalMeterEvidence` takes it, and its
+signature by ChargyCore. The session's page says what the meter signed was
+charged and whether the record says the same, and the price the operator
+stated for the charge point, in force at the start (`SessionPriceEvidence`) -
+with the price the phone counted with, and what the record says it costs,
+beside it. All of it is checked under the keys trusted now: a key no longer
+trusted checks nothing of a session it attested. That the meter's clock was
+right, and that the operator assigned the price to this very session, the
+page says is not proven.
+
 Only the keys trusted here are trusted. The servers only pass on what is
-signed, and a key a proof names of itself proves nothing.
+signed, and a key a proof names of itself proves nothing - nor one a charge
+detail record names.
 
 
 ### HTTPS
@@ -255,8 +278,9 @@ has it:
    answer on, the session is what they say: starting until the operator
    reports charging, then its kWh and its cost, finished with the figures of
    its charge detail record, or failed with the operator's answer. The
-   record's signed meter values are kept as they came. A provider that tells
-   nothing leaves the figures simulated.
+   record's signed meter values are kept as they came and, at a station of a
+   roaming network, checked as above. A provider that tells nothing leaves the
+   figures simulated.
 
 The session names its ticket - its id, its validity, the thumbprint of its key
 and the fingerprint of the issuer - and its start and stop: the token, the
@@ -325,9 +349,8 @@ an operator that starts and stops at a station on `START_SESSION` and
 through the [RoamingHub](https://github.com/OpenChargingCloud/RoamingHubCLI) -
 once the hub passes on what one peer sends to another, and the
 [CSMS](https://github.com/OpenChargingCloud/CSMSCLI) starts and stops on these
-commands; neither does yet. Then the signed meter values of a charge detail
-record checked against the key the station's proof gave; and the status of the
-charge points of a roaming network, followed over its WebSocket.
+commands; neither does yet. Then the status of the charge points of a roaming
+network, followed over its WebSocket.
 
 
 ## Your participation

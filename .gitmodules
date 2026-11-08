@@ -19,3 +19,6 @@
 [submodule "libs/WWCP_POI"]
 	path = libs/WWCP_POI
 	url = https://github.com/OpenChargingCloud/WWCP_POI.git
+[submodule "libs/ChargyCore.NET"]
+	path = libs/ChargyCore.NET
+	url = https://github.com/OpenChargingCloud/ChargyCore.NET.git

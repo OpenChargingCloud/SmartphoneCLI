@@ -4,6 +4,7 @@
     <Project Path="libs/Smartphone/SmartphoneTests/SmartphoneTests.csproj" />
   </Folder>
   <Folder Name="/Dependencies/OpenChargingCloud/">
+    <Project Path="libs/ChargyCore.NET/ChargyCore/ChargyCore.csproj" />
     <Project Path="libs/WWCP_Node/WWCP_Node/WWCP_Node.csproj" />
     <Project Path="libs/WWCP_Node/WWCP_Node_TestKit/WWCP_Node_TestKit.csproj" />
     <Project Path="libs/WWCP_Node/WWCP_Node_Tests/WWCP_Node_Tests.csproj" />
