@@ -217,8 +217,28 @@ https, Server-Sent Events or a WebSocket, as the link says - and keeps every
 signed document that comes, as it came: the session is starting until the
 first comes, charging from then on, and finished once the meter signs the end
 of the transaction or the station ends the stream. Its energy and cost are
-what the documents say, for the price the proof gives. It is stopped at the
-page, not here; a restart of the phone follows it on.
+what the documents say, for the price the proof gives. A restart of the
+phone follows it on.
+
+The page may give a stop link as well - an https URL of this session alone -
+and the driver hands it over with the live link (`"stopLink"`), or with the
+stop (`POST v1/charging/sessions/{id}/stop` with `{ "stopLink" }`). The phone
+stops the session with a POST to it, which the page takes with a 2xx; the
+session charges on until the meter signs its end, and is stopped then. Only
+the host of the stop link is shown and logged: whoever has the link stops the
+session. Where the page gave none, the driver stops it there.
+
+Handed over as well is the limit the driver chose at the page (`"limit"`), as
+OCPP 2.1 says it to the station, which keeps to it - the `transactionLimit`
+of `RequestStartTransaction`: `maxEnergy` in Wh, `maxCost` in the currency of
+the tariff, `maxTime` in seconds, `maxSoC` in percent. While it charges, the
+session shows each part of it against what the signed values say. Once the
+meter signs the end, or the station ends the stream, the phone compares them:
+it ended at its limit - within a hundredth of it, as the station counts from
+its own start and rounds its own cost -, for another reason, as the meter
+says the transaction ended ("E", "L", "R", "A", "P"), or stopped by this
+phone. A state of charge no meter measures: whether it ended at that limit,
+the phone says it can not tell.
 
 Every signed value that comes over the live link is checked as it comes,
 as a value of a charge detail record is: with the key the proofs kept give
@@ -229,9 +249,10 @@ where it is signed by that key, the meter says it is good - status "G", no
 error flagged - and it fits the values that held before it: none measured
 before the start value, and the meter counting forwards. Signed by another
 key, of another meter, not good as the meter says, or not fitting, it is a
-wrong one: the phone stops the session, says why, and follows its live link
-no more. The page gives the phone no link to stop the station with yet, so
-the driver is told to stop it there. Where the phone can not decide - the
+wrong one: the phone stops the session, says why, follows its live link no
+more, and stops the station through the stop link of the page, telling it
+why - where the page gave none, or did not take the stop, the driver is told
+to stop it there. Where the phone can not decide - the
 identity keys trusted here do not suffice, or no proof kept attests a key of
 the meter for that time - it says so and stops nothing, and checks again
 with what comes next. The end value is not checked yet.
@@ -402,9 +423,11 @@ Charging ad hoc, without an e-mobility provider: a free charge point is found
 on the map, its proof and tariff checked, its operator's web payment page
 offered - reached as well by the dynamic QR code of the station - and the live
 link of the session the page starts followed, its signed start value and
-every value after it checked with the key the proof gives for the meter.
-What comes next is the end value, which it disputes where it does not hold -
-stopping and disputing by the links of that page, once it gives them.
+every value after it checked with the key the proof gives for the meter,
+stopped through the stop link of the page, and its end compared with the
+limit chosen there. What comes next is the end value, checked as the values
+before it, which the phone disputes where it does not hold - by a link of
+that page, once it gives one.
 
 Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
