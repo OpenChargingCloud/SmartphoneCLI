@@ -276,6 +276,16 @@ logged. Where the page gave none, the driver is told to dispute the session
 there. A wrong value counts for nothing: the energy, the cost and the limit
 are what the values that count say.
 
+The page may give the reference of the payment it took as well, and the
+driver hands it over with the live link (`"paymentReference"`). The station
+writes it into the identification of every signed value of the session - the
+`"ID"` of its OCMF -, so that the meter signs whose session it is: a value
+that names another payment, or none, is of another session, a wrong one -
+before the end the phone stops the session for it, at the end it disputes
+it. Where the page gave no reference, that the values are of this very
+session is not proven - the live link names the charge point alone - and the
+session's page says so.
+
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
 holds for minutes, and the network serves the proof of its head and of no
@@ -445,9 +455,10 @@ of the station - and the live link of the session the page starts followed,
 its signed start value, every value after it and its end value checked with
 the key the proof gives for the meter, stopped through the stop link of the
 page, its end compared with the limit chosen there, and disputed through the
-dispute link of the page where a value does not hold. What is not proven yet
-is that the values are of this very session: the live link names the charge
-point, and nothing binds the payment at the page to what the meter signs.
+dispute link of the page where a value does not hold. A value is bound to the
+payment at the page where the page gives the reference of the payment and the
+meter signs it as the identification of the value (`"ID"`): the phone checks
+that it does - that the station and its CSMS have it signed is up to them.
 
 Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
