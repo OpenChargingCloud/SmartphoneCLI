@@ -238,24 +238,43 @@ it ended at its limit - within a hundredth of it, as the station counts from
 its own start and rounds its own cost -, for another reason, as the meter
 says the transaction ended ("E", "L", "R", "A", "P"), or stopped by this
 phone. A state of charge no meter measures: whether it ended at that limit,
-the phone says it can not tell.
+the phone says it can not tell. A wrong end value it compares nothing with.
 
 Every signed value that comes over the live link is checked as it comes,
 as a value of a charge detail record is: with the key the proofs kept give
 for the meter of that charge point at the time it was measured, by
 ChargyCore - the start value first, the first reading the meter signs as
-the begin of the transaction ("B"), then every value after it. A value holds
+the begin of the transaction ("B"), then every value after it, and the end
+value last: the reading that ends the transaction, alone or with the whole
+transaction from its begin - all of the OCMF of the session. A value holds
 where it is signed by that key, the meter says it is good - status "G", no
-error flagged - and it fits the values that held before it: none measured
-before the start value, and the meter counting forwards. Signed by another
-key, of another meter, not good as the meter says, or not fitting, it is a
-wrong one: the phone stops the session, says why, follows its live link no
-more, and stops the station through the stop link of the page, telling it
-why - where the page gave none, or did not take the stop, the driver is told
-to stop it there. Where the phone can not decide - the
-identity keys trusted here do not suffice, or no proof kept attests a key of
-the meter for that time - it says so and stops nothing, and checks again
-with what comes next. The end value is not checked yet.
+error flagged - and it fits the values that held before it and its readings
+each other: none measured before the start value, the meter counting
+forwards, a begin it says again the start value that held, and nothing
+measured after the end. Signed by another key, of another meter, not good
+as the meter says, or not fitting, it is a wrong one: before the end, the
+phone stops the session, says why, follows its live link no more, and stops
+the station through the stop link of the page, telling it why - where the
+page gave none, or did not take the stop, the driver is told to stop it
+there. Where the phone can not decide - the identity keys trusted here do
+not suffice, or no proof kept attests a key of the meter for that time - it
+says so and stops nothing, and checks again with what comes next; an end
+value with the proof of the station asked for again at the end.
+
+A wrong end value stops nothing - the transaction ended - and neither does
+none, where the station ended the stream and its meter signed no end: the
+phone disputes the session, as it does one it stopped for a wrong value. The
+page may give a dispute link for that - an https URL of this session alone -
+and the driver hands it over with the live link (`"disputeLink"`), or later
+(`POST v1/charging/sessions/{id}/dispute` with `{ "disputeLink" }`). The
+phone sends it a POST with why (`"reason"`) and the signed values it
+disputes, as they came (`"signedValues"`: the start value, and the wrong one
+or the last one), which the page takes with a 2xx - once the phone knows, and
+after a restart where it was not sent yet; one the page did not take is sent
+again where the driver asks. Only the host of the dispute link is shown and
+logged. Where the page gave none, the driver is told to dispute the session
+there. A wrong value counts for nothing: the energy, the cost and the limit
+are what the values that count say.
 
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
@@ -419,15 +438,16 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 
 ### What comes next
 
-Charging ad hoc, without an e-mobility provider: a free charge point is found
-on the map, its proof and tariff checked, its operator's web payment page
-offered - reached as well by the dynamic QR code of the station - and the live
-link of the session the page starts followed, its signed start value and
-every value after it checked with the key the proof gives for the meter,
-stopped through the stop link of the page, and its end compared with the
-limit chosen there. What comes next is the end value, checked as the values
-before it, which the phone disputes where it does not hold - by a link of
-that page, once it gives one.
+Charging ad hoc, without an e-mobility provider, is there from end to end: a
+free charge point is found on the map, its proof and tariff checked, its
+operator's web payment page offered - reached as well by the dynamic QR code
+of the station - and the live link of the session the page starts followed,
+its signed start value, every value after it and its end value checked with
+the key the proof gives for the meter, stopped through the stop link of the
+page, its end compared with the limit chosen there, and disputed through the
+dispute link of the page where a value does not hold. What is not proven yet
+is that the values are of this very session: the live link names the charge
+point, and nothing binds the payment at the page to what the meter signs.
 
 Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
