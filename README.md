@@ -217,9 +217,22 @@ https, Server-Sent Events or a WebSocket, as the link says - and keeps every
 signed document that comes, as it came: the session is starting until the
 first comes, charging from then on, and finished once the meter signs the end
 of the transaction or the station ends the stream. Its energy and cost are
-what the documents say, for the price the proof gives, and not checked yet
-against the key the proof gives for the meter. It is stopped at the page, not
-here; a restart of the phone follows it on.
+what the documents say, for the price the proof gives. It is stopped at the
+page, not here; a restart of the phone follows it on.
+
+The first reading the meter signs as the begin of the transaction ("B") is
+the start value, and it is checked as it comes, as a value of a charge
+detail record is: with the key the proofs kept give for the meter of that
+charge point at the time it was measured, by ChargyCore. It holds where it
+is signed by that key and the meter says it is good - status "G", no error
+flagged. Signed by another key, of another meter, or not good as the meter
+says, it is a wrong start value: the phone stops the session, says why, and
+follows its live link no more. The page gives the phone no link to stop the
+station with yet, so the driver is told to stop it there. Where the phone
+can not decide - the identity keys trusted here do not suffice, or no proof
+kept attests a key of the meter for that time - it says so and stops
+nothing, and checks again with what comes next. The values after the start
+are not checked yet.
 
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
@@ -386,11 +399,11 @@ file each below `SmartphoneCLI/CLI/CLICommands/`.
 Charging ad hoc, without an e-mobility provider: a free charge point is found
 on the map, its proof and tariff checked, its operator's web payment page
 offered - reached as well by the dynamic QR code of the station - and the live
-link of the session the page starts followed. What comes next is checking what
-comes over it with the key the proof gives for the meter: the signed start
-value, stopping the session where it does not hold, every value after it, and
-the end value, which it disputes where it does not hold - stopping and
-disputing by the links of that page.
+link of the session the page starts followed, its signed start value checked
+with the key the proof gives for the meter. What comes next is checking every
+value after it the same way, and the end value, which it disputes where it
+does not hold - stopping and disputing by the links of that page, once it
+gives them.
 
 Then a start through a charge point operator, end to end: the phone, the EMSP and
 an operator that starts and stops at a station on `START_SESSION` and
