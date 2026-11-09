@@ -286,6 +286,20 @@ it. Where the page gave no reference, that the values are of this very
 session is not proven - the live link names the charge point alone - and the
 session's page says so.
 
+The page may give all of this in one **hand-over** instead: a document of
+this session alone that names the live link, the stop link, the dispute link,
+the payment reference and the limit, at an https URL. The driver hands over
+that URL alone (`POST v1/charging/sessions` with `"handOver"` in place of the
+rest), and the phone takes it from the host of the web payment page the
+station's proof names, and from no other - a hand-over at another host is
+refused before it is asked. What it says is then what that page says: its
+payment reference is bound to the operator, and so is every link at that
+host. The session's page says which of what the page gave is the operator's,
+and that a link at another host, or anything typed, is not proven to be. Only
+the host of the hand-over is shown and logged, as it gives the stop link to
+whoever has it. What a page does for all of this is
+[WebPaymentPageInterface.md](libs/Smartphone/docs/WebPaymentPageInterface.md).
+
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
 holds for minutes, and the network serves the proof of its head and of no
@@ -452,7 +466,8 @@ Charging ad hoc, without an e-mobility provider, is there from end to end: a
 free charge point is found on the map, its proof and tariff checked, its
 operator's web payment page offered - reached as well by the dynamic QR code
 of the station - and the live link of the session the page starts followed,
-its signed start value, every value after it and its end value checked with
+handed over with all the page gives in one hand-over from the host of that
+page, its signed start value, every value after it and its end value checked with
 the key the proof gives for the meter, stopped through the stop link of the
 page, its end compared with the limit chosen there, and disputed through the
 dispute link of the page where a value does not hold. A value is bound to the
