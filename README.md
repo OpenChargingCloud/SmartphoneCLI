@@ -300,6 +300,25 @@ the host of the hand-over is shown and logged, as it gives the stop link to
 whoever has it. What a page does for all of this is
 [WebPaymentPageInterface.md](libs/Smartphone/docs/WebPaymentPageInterface.md).
 
+What a session costs is what the tariff of its station makes of what its meter
+signed when - not a price per kWh alone: energy, a flat fee, the time charging
+and the time parked, each where the restrictions of its element hold - the
+time of day in the time zone of the station, the date, the day, the energy and
+the duration so far, the power -, rounded up to its step size, with its VAT,
+between the least and the most the tariff says. A restriction of current, which
+no meter value says, is taken as one that does not hold, and the session's page
+says its cost is not exact then.
+
+The page may give a payment link as well (`"paymentLink"`), which the phone
+asks until the price agreement and the receipt of the session came: the
+agreement - WWCP_POI's `SessionPriceAgreement`, which the operator signs for
+the session and its signed start value - binds the price to it, and the session
+is charged by the tariff it agreed; the receipt says what the page took,
+signed by the operator with a key that may sign `payments` where it signs it,
+and is compared with the cost the phone works out. An agreement that does not
+hold, or a receipt of more than the cost, disputes the session through its
+dispute link (`POST v1/charging/sessions/{id}/payment` asks the page at once).
+
 A session started there keeps, in `charging-sessions.json`, the proof its
 station was checked by and the price statements that held. An attestation
 holds for minutes, and the network serves the proof of its head and of no
@@ -467,8 +486,10 @@ free charge point is found on the map, its proof and tariff checked, its
 operator's web payment page offered - reached as well by the dynamic QR code
 of the station - and the live link of the session the page starts followed,
 handed over with all the page gives in one hand-over from the host of that
-page, its signed start value, every value after it and its end value checked with
-the key the proof gives for the meter, stopped through the stop link of the
+page, its price bound to it by the agreement of its operator and what the page
+took compared with its cost, of every part of its tariff, its signed start
+value, every value after it and its end value checked with the key the proof
+gives for the meter, stopped through the stop link of the
 page, its end compared with the limit chosen there, and disputed through the
 dispute link of the page where a value does not hold. A value is bound to the
 payment at the page where the page gives the reference of the payment and the
