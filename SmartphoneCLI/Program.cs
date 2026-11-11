@@ -108,10 +108,6 @@ namespace cloud.charging.open.Smartphone
             await using (smartphone)
             {
 
-                // What somebody signed in over SSH gets: this program's own command
-                // line, with its commands beside the node's.
-                smartphone.CommandLines = (terminal, caller) => new SmartphoneCLI(smartphone, terminal, caller);
-
                 if (smartphone.ImportCertificates(arguments, out _) is Int32 notImported)
                     return notImported;
 
@@ -130,8 +126,9 @@ namespace cloud.charging.open.Smartphone
 
                 #region The command line, until 'quit', Ctrl+C or SIGTERM
 
-                // The node's: a prompt where somebody can type, and waiting
-                // where nobody can, with the log sharing the screen.
+                // The smartphone's, which it hands to whoever signs in over SSH
+                // as well: a prompt where somebody can type, and waiting where
+                // nobody can, with the log sharing the screen.
                 await new SmartphoneCLI(smartphone).RunUntilStopped();
 
                 #endregion

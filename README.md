@@ -59,7 +59,7 @@ git submodule update --init --recursive
 
 ### Building and running it
 
-.NET 10 and Node 22 or newer. The build runs `npm ci` and `npm run build` for
+.NET 11 and Node 22 or newer. The build runs `npm ci` and `npm run build` for
 the web interface itself whenever its inputs changed:
 
 ```
@@ -475,8 +475,13 @@ smartphone:2346> syncNTS
 ```
 
 `help` lists what can be typed: what every node has - `syncNTS`, `log`, `who`,
-`sshKeys`, `apiKeys` - and, as the smartphone grows, its own commands, one
-file each below `SmartphoneCLI/CLI/CLICommands/`.
+`sshKeys`, `apiKeys` - and, as the smartphone grows, its own commands. The
+command line is the smartphone's and not this program's: `SmartphoneCLI` in
+`libs/Smartphone/Smartphone/CommandLine/`, the same at the console and over
+SSH, where the smartphone hands it out itself - whichever program runs it, the
+tests as well. A command of its own goes beside it, one file each, built from
+a `SmartphoneCLI`; `SmartphoneTests/CommandLineTests.cs` there checks that
+every one is on it.
 
 
 ### What comes next
