@@ -1,5 +1,7 @@
 # SmartphoneCLI
 
+![The EV charging test environment, the smartphone (SP) highlighted](docs/EVChargingTestEnvironment.svg)
+
 [![CI](https://github.com/OpenChargingCloud/SmartphoneCLI/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenChargingCloud/SmartphoneCLI/actions/workflows/ci.yml)
 [![Nightly](https://github.com/OpenChargingCloud/SmartphoneCLI/actions/workflows/nightly.yml/badge.svg)](https://github.com/OpenChargingCloud/SmartphoneCLI/actions/workflows/nightly.yml)
 
